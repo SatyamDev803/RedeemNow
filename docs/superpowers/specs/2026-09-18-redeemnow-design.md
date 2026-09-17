@@ -91,14 +91,14 @@ State: `idle` (USDC held), `outstanding` (sum of advances at face), `maxUtilisat
 - `advance(to, amount)` — bridge only; requires `idle >= amount` and post-utilisation `<= max`; `idle -= amount; outstanding += amount`; transfers USDC to `to`.
 - `settleReceivable(advanced, proceedsToVault)` — bridge only, USDC already transferred in; `outstanding -= advanced; idle += proceedsToVault`. If `proceedsToVault < advanced` emit `LossRealised`.
 - `withdraw`/`redeem` (ERC-4626) limited to `idle`; `maxWithdraw` reflects this.
-- Deposits/withdrawals blocked while paused (mirrors bridge pause via admin).
+- Vault is `Pausable`; `PAUSER_ROLE` (admin) pauses deposits, withdrawals and advances.
 
 Share price rises when `proceedsToVault > advanced` and falls when lower. This is the only yield mechanism.
 
 ### 4.5 Pricing library (pure)
 
 ```
-u              = vault.utilisationBps() after the proposed advance (computed by bridge)
+u              = (outstanding + navValue6d) * 10000 / (idle + outstanding)   // utilisation if the full NAV value were advanced (upper bound, avoids circularity)
 utilTermBps    = u <= kink ? slope1 * u / kink
                            : slope1 + slope2 * (u - kink) / (10000 - kink)
 timeRiskBps    = dailyVolBps * sqrt(horizonDays)          // sqrt in 1e18 fixed point
@@ -137,7 +137,7 @@ struct Receivable {
 - `quote(token, amount) → (navValue, spreadBps, utilTermBps, timeRiskBps, payout)` view.
 - `redeem(token, amount, minPayout)`:
   1. asset enabled and `eligible`, else `NotEligibleRedeemer(token)` / `AssetDisabled`.
-  2. compute quote using post-advance utilisation; `payout >= minPayout` else `SlippageExceeded`.
+  2. compute quote (utilisation as defined in 4.5); `payout >= minPayout` else `SlippageExceeded`.
   3. `token.transferFrom(msg.sender, issuer, amount)`; `issuer.requestRedemption(id, token, amount)`.
   4. `vault.advance(msg.sender, payout)`.
   5. store receivable, emit `ReceivableOpened(id, token, holder, amount, navAtFront, advanced, settleAfter)`.
