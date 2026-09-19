@@ -11,7 +11,11 @@ contracts/lib/
 contracts/.env
 # packages/shared/deployments/ is DELIBERATELY tracked: it holds public contract
 # addresses that the app needs at runtime. Ignoring it ships a site with no assets.
-packages/shared/src/generated.ts
+#
+# src/generated.ts is tracked for the same reason. It is `wagmi generate` output, but generating it
+# needs Foundry and compiled artifacts in contracts/out/, which no web host has — so ignoring it
+# makes `next build` fail on any machine that only has the repo. Regenerate with
+# `pnpm --filter @redeemnow/shared abis` after changing a contract interface, and commit the result.
 keeper/.env
 web/.next/
 web/node_modules/
