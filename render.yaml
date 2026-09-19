@@ -1,19 +1,24 @@
 # Render blueprint for the RedeemNow dashboard.
 #
 # This is a pnpm workspace, so the build runs from the REPO ROOT (not web/) — the web package
-# depends on @redeemnow/shared via `workspace:*`, and installing from inside web/ cannot resolve it.
+# depends on @redeemnow/shared via `workspace:*`, which cannot resolve from inside web/.
 #
 # Contract addresses are baked into the bundle at build time from
-# packages/shared/deployments/*.json, which is tracked in git precisely so this works. There are no
-# secrets to configure: everything the app reads is public chain state over a public RPC.
+# packages/shared/deployments/*.json, tracked in git precisely so this works. No secrets: every
+# value the app reads is public chain state over a public RPC.
 services:
   - type: web
     name: redeemnow
     runtime: node
     plan: free
-    region: singapore          # closest to the demo audience
+    region: singapore
     branch: main
-    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm --filter web build
+    # `npm i -g pnpm` rather than `corepack enable`: corepack needs to write into the Node install
+    # and is the usual cause of a "pnpm: not found" build on Render.
+    # `--no-frozen-lockfile` because a lockfile resolved on macOS/Node 24 can carry platform
+    # specifics that make a frozen install fail on Render's Linux image — a failure that says
+    # nothing useful about the actual dependency tree.
+    buildCommand: npm i -g pnpm@10.0.0 && pnpm install --no-frozen-lockfile && pnpm --filter web build
     startCommand: pnpm --filter web start
     healthCheckPath: /
     envVars:
@@ -21,7 +26,7 @@ services:
         value: "22.20.0"
       - key: NODE_ENV
         value: production
-      # Next binds to this. Render injects PORT; `next start` reads it, but being explicit avoids a
-      # health-check failure if the default ever changes.
-      - key: PORT
-        value: "10000"
+      # The free plan caps at 512MB and a Next build will OOM against the default V8 heap. This is
+      # the most common silent "deploy failed" on this tier.
+      - key: NODE_OPTIONS
+        value: "--max-old-space-size=460"
