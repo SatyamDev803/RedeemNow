@@ -1,0 +1,27 @@
+# Render blueprint for the RedeemNow dashboard.
+#
+# This is a pnpm workspace, so the build runs from the REPO ROOT (not web/) — the web package
+# depends on @redeemnow/shared via `workspace:*`, and installing from inside web/ cannot resolve it.
+#
+# Contract addresses are baked into the bundle at build time from
+# packages/shared/deployments/*.json, which is tracked in git precisely so this works. There are no
+# secrets to configure: everything the app reads is public chain state over a public RPC.
+services:
+  - type: web
+    name: redeemnow
+    runtime: node
+    plan: free
+    region: singapore          # closest to the demo audience
+    branch: main
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm --filter web build
+    startCommand: pnpm --filter web start
+    healthCheckPath: /
+    envVars:
+      - key: NODE_VERSION
+        value: "22.20.0"
+      - key: NODE_ENV
+        value: production
+      # Next binds to this. Render injects PORT; `next start` reads it, but being explicit avoids a
+      # health-check failure if the default ever changes.
+      - key: PORT
+        value: "10000"
