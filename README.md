@@ -20,7 +20,7 @@ spread = base + utilisation(u) + timeRisk(vol, √horizon) + credit(creditBps)
 
 | | |
 |---|---|
-| **App** | `LIVE_URL` |
+| **App** | https://redeemnow.onrender.com |
 | **Network** | Monad Testnet (chain **10143**) |
 | **RedemptionBridge** | `0xfE551a07A86af845dCc25EE0bC25Ea932dFAFE54` |
 | **LiquidityVault** | `0x5483D4106e1629f2A1E6effA0eA803E3C326983c` |
