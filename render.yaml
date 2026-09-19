@@ -13,12 +13,16 @@ services:
     plan: free
     region: singapore
     branch: main
-    # `npm i -g pnpm` rather than `corepack enable`: corepack needs to write into the Node install
-    # and is the usual cause of a "pnpm: not found" build on Render.
-    # `--no-frozen-lockfile` because a lockfile resolved on macOS/Node 24 can carry platform
-    # specifics that make a frozen install fail on Render's Linux image — a failure that says
-    # nothing useful about the actual dependency tree.
-    buildCommand: npm i -g pnpm@10.0.0 && pnpm install --no-frozen-lockfile && pnpm --filter web build
+    # `npm i -g pnpm@10.0.0` rather than `corepack enable`: corepack needs to write into the Node
+    # install and is the usual cause of a "pnpm: not found" build on Render. The version is pinned
+    # to package.json's `packageManager` so the build resolves deps with the same pnpm we develop on.
+    #
+    # `--frozen-lockfile` deliberately. A build that may re-resolve the dependency tree can install
+    # versions nobody tested, which is the whole point of committing a lockfile; the deployed bundle
+    # must be built from the exact tree in git. `pnpm install --frozen-lockfile` is verified to
+    # succeed against this lockfile, so a failure here means the lockfile is genuinely stale and
+    # should be regenerated and committed — not worked around at deploy time.
+    buildCommand: npm i -g pnpm@10.0.0 && pnpm install --frozen-lockfile && pnpm --filter web build
     startCommand: pnpm --filter web start
     healthCheckPath: /
     envVars:
