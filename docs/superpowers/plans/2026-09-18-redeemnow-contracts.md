@@ -401,8 +401,11 @@ contract RWARegistryTest is Test {
 
     function setUp() public {
         registry = new RWARegistry(admin, 60);
+        // NOTE: hoist the role out of the pranked call. `registry.NAV_UPDATER_ROLE()` is an
+        // external staticcall that would otherwise consume the vm.prank.
+        bytes32 navRole = registry.NAV_UPDATER_ROLE();
         vm.prank(admin);
-        registry.grantRole(registry.NAV_UPDATER_ROLE(), updater);
+        registry.grantRole(navRole, updater);
     }
 
     function _register() internal {
@@ -1018,7 +1021,11 @@ contract LiquidityVaultTest is Test {
         assertEq(vault.outstanding(), 0);
         assertEq(vault.idle(), 100_100e6);
         assertEq(vault.totalAssets(), 100_100e6);
-        assertEq(vault.convertToAssets(100_000e6), 100_100e6);
+        // ERC-4626 applies an unconditional virtual +1 asset / +1 share offset (OZ inflation-attack
+        // protection), independent of _decimalsOffset(), so the redeemable value lands 1 wei under
+        // the nominal 100_100e6. Assert the intent, not the rounding artifact.
+        assertGt(vault.convertToAssets(100_000e6), 100_000e6);
+        assertApproxEqAbs(vault.convertToAssets(100_000e6), 100_100e6, 1);
     }
 
     function test_shortfallSettlementLowersSharePriceAndEmits() public {
@@ -1310,8 +1317,12 @@ contract MockIssuerTest is Test {
         vm.prank(bridge);
         issuer.requestRedemption(1, address(rwa), 1_000e18);
         // NAV moved up before settlement
+        // NOTE: hoist the role out of the pranked call. `registry.NAV_UPDATER_ROLE()` is an
+        // external staticcall and would otherwise consume the vm.prank, so grantRole would
+        // execute as the test contract (which lacks DEFAULT_ADMIN_ROLE) and revert.
+        bytes32 navRole = registry.NAV_UPDATER_ROLE();
         vm.prank(admin);
-        registry.grantRole(registry.NAV_UPDATER_ROLE(), admin);
+        registry.grantRole(navRole, admin);
         vm.prank(admin);
         registry.setNav(address(rwa), 1.05e18);
 
@@ -1748,8 +1759,11 @@ contract RedemptionBridgeTest is Fixture {
     }
 
     function test_demoAdminCanSettleEarlyAndEmitsOverride() public {
+        // NOTE: hoist the role out of the pranked call — an external getter passed as an
+        // argument consumes vm.prank before grantRole runs.
+        bytes32 demoRole = bridge.DEMO_ADMIN_ROLE();
         vm.prank(admin);
-        bridge.grantRole(bridge.DEMO_ADMIN_ROLE(), admin);
+        bridge.grantRole(demoRole, admin);
         vm.prank(holder);
         bridge.redeem(address(tbill), 1_000e18, 0);
 

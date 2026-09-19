@@ -1,0 +1,9 @@
+{
+  "name": "contracts",
+  "private": true,
+  "scripts": {
+    "build": "forge build",
+    "test": "echo 'Run a single file: forge test --match-path test/<File>.t.sol' && exit 1",
+    "anvil": "anvil --chain-id 31337 --block-time 1"
+  }
+}

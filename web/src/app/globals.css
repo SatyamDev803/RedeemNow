@@ -1,0 +1,277 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+/* Tailwind 4: drive `dark:` from a class we control, not from the media query alone,
+   so an explicit user choice can override the system preference. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* One family. The demo machine renders genuine SF Pro; Inter is the loaded
+     cross-platform fallback with close enough metrics that layout does not shift. */
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
+               var(--font-inter), "Helvetica Neue", Arial, sans-serif;
+  /* Monospace is for addresses and tx hashes ONLY — never for data labels. */
+  --font-mono: ui-monospace, "SF Mono", var(--font-mono-stack), Menlo, monospace;
+
+  /* ---- Surfaces (light, the default) ---- */
+  --color-ground:      oklch(0.977 0.0015 264);
+  --color-surface:     oklch(1     0      0  );
+  --color-surface-2:   oklch(0.958 0.0025 264);  /* wells, table headers, segmented track */
+  --color-line:        oklch(0.906 0.004  264);  /* hairline separators */
+  --color-line-firm:   oklch(0.858 0.005  264);  /* input borders */
+
+  /* ---- Ink (light) ---- */
+  --color-ink:         oklch(0.205 0.012  264);
+  --color-ink-dim:     oklch(0.468 0.011  264);
+  --color-ink-faint:   oklch(0.632 0.009  264);
+
+  /* ---- Accent: interactive affordances only, never decoration ---- */
+  --color-brand:       oklch(0.505 0.168 266);
+  --color-brand-hover: oklch(0.448 0.172 266);
+  --color-brand-ink:   oklch(0.995 0     0  );
+  --color-brand-soft:  oklch(0.955 0.028 266);
+
+  /* ---- Semantic: P&L and pass/fail ONLY. Never a chart series. ---- */
+  --color-gain:      oklch(0.545 0.135 152);
+  --color-gain-soft: oklch(0.955 0.035 152);
+  --color-loss:      oklch(0.545 0.190 25 );
+  --color-loss-soft: oklch(0.957 0.036 25 );
+  --color-warn:      oklch(0.600 0.130 75 );
+  --color-warn-soft: oklch(0.962 0.040 75 );
+
+  /* ---- Spread decomposition: VALIDATED categorical palette, fixed order.
+     Passed all six dataviz checks in both modes. Do not substitute a value
+     without re-running scripts/validate_palette.js. ---- */
+  --color-term-base:   #4C7EF3;  /* protocol operating floor */
+  --color-term-util:   #A96500;  /* utilisation — amber because utilisation is heat */
+  --color-term-time:   #0E9AA7;  /* volatility over the horizon */
+  --color-term-credit: #8E44C9;  /* expected loss. VIOLET, never red: credit is a
+                                    premium earned, not a loss taken. */
+
+  /* ---- Shape: radius encodes hierarchy ---- */
+  --radius-control: 8px;
+  --radius-card:    14px;
+  --radius-sheet:   20px;
+
+  /* ---- Motion: Apple's curve, short, action-triggered only ---- */
+  --ease-std:  cubic-bezier(0.32, 0.72, 0, 1);
+  --dur-fast:  140ms;
+  --dur-std:   220ms;
+}
+
+/* Dark steps are SELECTED against the dark surface, not an inversion of light.
+   Dark is a counterpart chosen on its own terms, applied only when .dark is present —
+   light remains the default until the person's system or explicit choice says otherwise. */
+.dark {
+  --color-ground:      oklch(0.178 0.006 264);
+  --color-surface:     oklch(0.216 0.008 264);
+  --color-surface-2:   oklch(0.258 0.009 264);
+  --color-line:        oklch(0.305 0.010 264);
+  --color-line-firm:   oklch(0.372 0.011 264);
+
+  --color-ink:         oklch(0.968 0.003 264);
+  --color-ink-dim:     oklch(0.722 0.010 264);
+  --color-ink-faint:   oklch(0.566 0.010 264);
+
+  --color-brand:       oklch(0.672 0.158 266);
+  --color-brand-hover: oklch(0.730 0.148 266);
+  --color-brand-ink:   oklch(0.165 0.020 266);
+  --color-brand-soft:  oklch(0.292 0.058 266);
+
+  --color-gain:      oklch(0.730 0.150 152);
+  --color-gain-soft: oklch(0.278 0.050 152);
+  --color-loss:      oklch(0.680 0.185 25 );
+  --color-loss-soft: oklch(0.288 0.062 25 );
+  --color-warn:      oklch(0.775 0.140 75 );
+  --color-warn-soft: oklch(0.300 0.055 75 );
+
+  /* Re-validated against the dark surface — not the light values lightened. */
+  --color-term-base:   #5A87F0;
+  --color-term-util:   #BD8620;
+  --color-term-time:   #17A3AB;
+  --color-term-credit: #9E63D2;
+  /* shadcn's stock dark greys were emitted here and removed: the :root mapping
+     points at the tokens redefined above, so dark mode follows automatically. */
+}
+
+html { background-color: var(--color-ground); }
+
+body {
+  background-color: var(--color-ground);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 22px;
+  letter-spacing: -0.004em;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Numbers wear TABULAR FIGURES IN THE SANS FACE — not a monospace family.
+   This is Apple's own treatment in Stocks, Numbers and Wallet: numerals stay in
+   the same voice as their labels, and columns still align. */
+.num {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+/* Reserved for addresses and transaction hashes, where 0-vs-O matters. */
+.hash {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+/* Type scale — Apple's named roles, adapted down for dashboard density.
+   Tracking tightens as size grows, mimicking optical sizing. Sentence case
+   everywhere; hierarchy comes from size, weight and colour, never text-transform. */
+.t-large-title { font-size: 32px; line-height: 38px; font-weight: 600; letter-spacing: -0.021em; }
+.t-title-2     { font-size: 22px; line-height: 28px; font-weight: 600; letter-spacing: -0.017em; }
+.t-title-3     { font-size: 17px; line-height: 22px; font-weight: 600; letter-spacing: -0.011em; }
+.t-body        { font-size: 15px; line-height: 22px; font-weight: 400; letter-spacing: -0.004em; }
+.t-callout     { font-size: 14px; line-height: 20px; font-weight: 400; letter-spacing: -0.003em; }
+.t-footnote    { font-size: 13px; line-height: 18px; font-weight: 400; }
+.t-caption     { font-size: 12px; line-height: 16px; font-weight: 400; }
+.t-metric      { font-size: 28px; line-height: 32px; font-weight: 590; letter-spacing: -0.02em;
+                 font-variant-numeric: tabular-nums; }
+.t-metric-lg   { font-size: 40px; line-height: 44px; font-weight: 600; letter-spacing: -0.024em;
+                 font-variant-numeric: tabular-nums; }
+
+/* Elevation: hairline first, shadow second. Two levels only. */
+.elev-1 { box-shadow: 0 1px 2px oklch(0.2 0.01 264 / 0.05),
+                      0 0 0 0.5px oklch(0.2 0.01 264 / 0.045); }
+.elev-2 { box-shadow: 0 4px 16px oklch(0.2 0.01 264 / 0.07),
+                      0 1px 3px oklch(0.2 0.01 264 / 0.05); }
+/* Shadows do not read on dark surfaces — use an inset hairline highlight instead. */
+.dark .elev-1 { box-shadow: inset 0 0 0 0.5px oklch(1 0 0 / 0.07); }
+.dark .elev-2 { box-shadow: inset 0 0 0 0.5px oklch(1 0 0 / 0.09),
+                            0 8px 24px oklch(0 0 0 / 0.35); }
+
+/* The one Apple signature worth keeping: a translucent, blurred nav. */
+.material-bar {
+  background-color: color-mix(in oklch, var(--color-ground) 72%, transparent);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+}
+
+/* Focus is always visible. Never `outline: none` without a replacement. */
+:where(a, button, input, select, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+  border-radius: var(--radius-control);
+}
+
+/* A polled value changed. One-shot, not a loop. */
+@keyframes value-settle {
+  from { background-color: var(--color-brand-soft); }
+  to   { background-color: transparent; }
+}
+.tick { animation: value-settle var(--dur-std) var(--ease-std); border-radius: 4px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .tick { animation: none; }
+  *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+}
+
+@theme inline {
+  --font-heading: var(--font-sans);
+  --font-sans: var(--font-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+  /* ------------------------------------------------------------------------
+     shadcn's semantic variables, wired to the RedeemNow design tokens above.
+     shadcn components read these names, so mapping them here is what makes a
+     stock shadcn component wear our palette instead of its default neutral grey.
+     Never hardcode a colour into a shadcn component — change the mapping here.
+
+     Note the deliberate name clash: shadcn's `--accent` is a SUBTLE HOVER
+     SURFACE, not a brand colour. Our brand blue is `--color-brand`. Wiring
+     `--accent` to the brand blue would tint every hover state blue.
+     ------------------------------------------------------------------------ */
+  --background:            var(--color-ground);
+  --foreground:            var(--color-ink);
+  --card:                  var(--color-surface);
+  --card-foreground:       var(--color-ink);
+  --popover:               var(--color-surface);
+  --popover-foreground:    var(--color-ink);
+  --primary:               var(--color-brand);
+  --primary-foreground:    var(--color-brand-ink);
+  --secondary:             var(--color-surface-2);
+  --secondary-foreground:  var(--color-ink);
+  --muted:                 var(--color-surface-2);
+  --muted-foreground:      var(--color-ink-dim);
+  --accent:                var(--color-surface-2);
+  --accent-foreground:     var(--color-ink);
+  --destructive:           var(--color-loss);
+  --border:                var(--color-line);
+  --input:                 var(--color-line-firm);
+  --ring:                  var(--color-brand);
+  /* Charts use the VALIDATED spread palette, in its fixed order, so a shadcn
+     chart and our SpreadBar can never disagree about what colour credit is. */
+  --chart-1: var(--color-term-base);
+  --chart-2: var(--color-term-util);
+  --chart-3: var(--color-term-time);
+  --chart-4: var(--color-term-credit);
+  --chart-5: var(--color-ink-faint);
+  --radius: var(--radius-card);
+  --sidebar:                       var(--color-surface);
+  --sidebar-foreground:            var(--color-ink);
+  --sidebar-primary:               var(--color-brand);
+  --sidebar-primary-foreground:    var(--color-brand-ink);
+  --sidebar-accent:                var(--color-surface-2);
+  --sidebar-accent-foreground:     var(--color-ink);
+  --sidebar-border:                var(--color-line);
+  --sidebar-ring:                  var(--color-brand);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}

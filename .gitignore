@@ -7,3 +7,19 @@ broadcast/
 .next/
 dist/
 .DS_Store
+contracts/lib/
+contracts/.env
+# packages/shared/deployments/ is DELIBERATELY tracked: it holds public contract
+# addresses that the app needs at runtime. Ignoring it ships a site with no assets.
+packages/shared/src/generated.ts
+keeper/.env
+web/.next/
+web/node_modules/
+.devstack/
+
+# Draft social copy — private, not part of the public repo
+docs/build-in-public.md
+
+# Internal working notes — ledgers, dispatch briefs, agent reports. Not part of the product.
+.superpowers/
+.playwright-mcp/

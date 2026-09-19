@@ -1,0 +1,25 @@
+{
+  "name": "@redeemnow/keeper",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "bin": { "keeper": "./src/index.ts" },
+  "scripts": {
+    "keeper": "tsx src/index.ts",
+    "settle": "tsx src/index.ts settle",
+    "nav-sim": "tsx src/index.ts nav-sim",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@redeemnow/shared": "workspace:*",
+    "commander": "15.0.0",
+    "dotenv": "18.0.0",
+    "viem": "2.56.8"
+  },
+  "devDependencies": {
+    "@types/node": "24.13.5",
+    "tsx": "4.23.13",
+    "typescript": "7.0.2",
+    "vitest": "5.0.1"
+  }
+}
